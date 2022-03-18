@@ -106,7 +106,7 @@ contract RelayAdapt {
     // Calculate the expected adaptID parameters value
     // The number of transactions is included here to ensure railgun transactions can't be removed
     // by an adversary while the transaction is still in the mempool\
-    uint256[ _transactions.length] memory firstNullifiers;
+    uint256[] memory firstNullifiers = new uint256[](_transactions.length);
     for (uint256 i = 0; i < _transactions.length; i++){
       //only need first nullifier
       firstNullifiers[i] = _transactions[i].nullifier[0];
