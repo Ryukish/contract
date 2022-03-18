@@ -109,7 +109,7 @@ contract RelayAdapt {
     uint256[] memory firstNullifiers = new uint256[](_transactions.length);
     for (uint256 i = 0; i < _transactions.length; i++){
       //only need first nullifier
-      firstNullifiers[i] = _transactions[i].nullifier[0];
+      firstNullifiers[i] = _transactions[i].nullifiers[0];
     }
 
     uint256 adaptIDparameters = uint256(
