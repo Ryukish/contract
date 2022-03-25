@@ -22,7 +22,6 @@
     "ethereum-waffle": "^3.2.2",
     "ethers": "^5.0.31",
     "hardhat": "^2.0.9",
-    "hardhat-artifactor": "^0.2.0",
     "hardhat-docgen": "^1.1.1",
     "hardhat-gas-reporter": "^1.0.4",
     "hardhat-tracer": "^1.0.0-alpha.6",
