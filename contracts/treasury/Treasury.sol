@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 // OpenZeppelin v4
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from  "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -42,6 +43,21 @@ contract Treasury is Ownable {
     require(_to != address(0), "Treasury: Preventing potential accidental burn");
     _token.safeTransfer(_to, _amount);
   }
+
+    /**
+   * @notice Transfers ERC1155 to specified address
+   * @param _token - ERC1155 token address to transfer
+   * @param _from - Address to transfer tokens to
+   * @param _to - Address to transfer tokens to
+   * @param _id - token type id
+   * @param _amount - Amount of tokens to transfer
+   * @param _data - 
+   */
+  function transferERC1155(IERC1155 _token, address _from, address _to,uint256 _id, uint256 _amount, bytes memory _data) external onlyOwner {
+    require(_to != address(0), "Treasury: Preventing potential accidental burn");
+    _token.safeTransferFrom(_from, _to, _id, _amount, _data);
+  }
+
 
   /**
    * @notice Recieve ETH
