@@ -23,6 +23,10 @@ contract Treasury is Ownable {
     uint256 value;
   }
 
+  struct Result {
+    bool success;
+    bytes returnData;
+  }
   /**
    * @notice Sets initial admin
    */
@@ -67,11 +71,21 @@ contract Treasury is Ownable {
     _token.safeTransferFrom(_from, _to, _id, _amount, _data);
   }
 
-  function callContract(Call calldata _calls) external onlyAdmin {
+  function callContract(Call[] calldata _calls) public noExternalContract onlyAdmin returns (Result[] memory) {
     // Call external contract and return
     // solhint-disable-next-line avoid-low-level-calls
-    (bool success, ) = _calls.to.call{value: _calls.value}(_calls.data);
-    require(success, "failure on external contract call");
+
+    Result[] memory returnData = new Result[](_calls.length);
+
+    for(uint256 i = 0; i < _calls.length; i++) {
+      Call calldata call = _calls[i];
+      
+      (bool success, bytes memory ret) = call.to.call{value: call.value}(call.data);
+      require(success, "Call Failed");
+      returnData[i] = Result(success, ret);
+    }
+
+    return returnData;
   }
 
   modifier onlyAdmin() {
@@ -79,16 +93,14 @@ contract Treasury is Ownable {
         _;
   }
 
-  function addAdmin(address userAddress) external onlyAdmin {
+  function addAdmin(address userAddress) public noExternalContract onlyAdmin {
     require(userAddress != 0x0000000000000000000000000000000000000000 && !admins[userAddress]);             
     admins[userAddress] = true;    
-
   }
 
-  function removeAdmin(address userAddress) external onlyAdmin {
-    require(userAddress != 0x0000000000000000000000000000000000000000);             
+  function removeAdmin(address userAddress) public noExternalContract onlyAdmin {
+    require(userAddress != 0x0000000000000000000000000000000000000000 && admins[userAddress]);             
     admins[userAddress] = false;    
-
   }
   /**
    * @notice Recieve ETH
