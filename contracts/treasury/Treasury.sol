@@ -7,15 +7,16 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from  "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl }"@openzeppelin/contracts/access/AccessControl.sol";
+
 
 /**
  * @title Treasury
  * @author Railgun Contributors
  * @notice Stores treasury funds for Railgun
  */
-contract Treasury is Ownable {
+contract Treasury is Ownable, AccessControl {
   using SafeERC20 for IERC20;
-  mapping(address => bool) admins;
   
   struct Call {
     address to;
@@ -27,12 +28,16 @@ contract Treasury is Ownable {
     bool success;
     bytes returnData;
   }
+
+  bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
+  bytes32 public constant TRANSACTIONS_ROLE = keccak256("TRANSACTIONS_ROLE");
+
   /**
    * @notice Sets initial admin
    */
   constructor(address _admin) {
     Ownable.transferOwnership(_admin);
-    admins[_admin] = true;
+    _setupRole(GOVERNANCE_ROLE, _admin);
   }
 
   /**
@@ -40,7 +45,7 @@ contract Treasury is Ownable {
    * @param _to - Address to transfer ETH to
    * @param _amount - Amount of ETH to transfer
    */
-  function transferETH(address payable _to, uint256 _amount) external onlyAdmin {
+  function transferETH(address payable _to, uint256 _amount) external {
     require(_to != address(0), "Treasury: Preventing potential accidental burn");
     (bool sent,) = _to.call{value: _amount}("");
     require(sent, "Failed to send Ether");
@@ -52,7 +57,8 @@ contract Treasury is Ownable {
    * @param _to - Address to transfer tokens to
    * @param _amount - Amount of tokens to transfer
    */
-  function transferERC20(IERC20 _token, address _to, uint256 _amount) external onlyAdmin {
+  function transferERC20(IERC20 _token, address _to, uint256 _amount) external {
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);
     require(_to != address(0), "Treasury: Preventing potential accidental burn");
     _token.safeTransfer(_to, _amount);
   }
@@ -66,12 +72,14 @@ contract Treasury is Ownable {
    * @param _amount - Amount of tokens to transfer
    * @param _data - 
    */
-  function transferERC1155(IERC1155 _token, address _from, address _to,uint256 _id, uint256 _amount, bytes memory _data) external onlyAdmin {
+  function transferERC1155(IERC1155 _token, address _from, address _to,uint256 _id, uint256 _amount, bytes memory _data) external {
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);
     require(_to != address(0), "Treasury: Preventing potential accidental burn");
     _token.safeTransferFrom(_from, _to, _id, _amount, _data);
   }
 
-  function callContract(Call[] calldata _calls) public noExternalContract onlyAdmin returns (Result[] memory) {
+  function callContract(Call[] calldata _calls) public noExternalContract returns (Result[] memory) {
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);        
     // Call external contract and return
     // solhint-disable-next-line avoid-low-level-calls
 
@@ -88,20 +96,17 @@ contract Treasury is Ownable {
     return returnData;
   }
 
-  modifier onlyAdmin() {
-    require(admins[msg.sender] == true);
-        _;
+  function addTransactionRole(address userAddress) public noExternalContract {
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);      
+    grantRole(TRANSACTIONS_ROLE, userAddress);
   }
 
-  function addAdmin(address userAddress) public noExternalContract onlyAdmin {
-    require(userAddress != 0x0000000000000000000000000000000000000000 && !admins[userAddress]);             
-    admins[userAddress] = true;    
+  function removeTransactionRole(address userAddress) public noExternalContract {
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);        
+    revokeRole(TRANSACTIONS_ROLE, userAddress);
   }
 
-  function removeAdmin(address userAddress) public noExternalContract onlyAdmin {
-    require(userAddress != 0x0000000000000000000000000000000000000000 && admins[userAddress]);             
-    admins[userAddress] = false;    
-  }
+  /**
   /**
    * @notice Recieve ETH
    */
