@@ -17,6 +17,12 @@ contract Treasury is Ownable {
   using SafeERC20 for IERC20;
   mapping(address => bool) admins;
   
+  struct Call {
+    address to;
+    bytes data;
+    uint256 value;
+  }
+
   /**
    * @notice Sets initial admin
    */
@@ -61,10 +67,10 @@ contract Treasury is Ownable {
     _token.safeTransferFrom(_from, _to, _id, _amount, _data);
   }
 
-  function callContract(address _contract, bytes calldata _data, uint256 _value) external onlyAdmin {
+  function callContract(Call calldata _calls) external onlyAdmin {
     // Call external contract and return
     // solhint-disable-next-line avoid-low-level-calls
-    (bool success, ) = _contract.call{value: _value}(_data);
+    (bool success, ) = _calls.to.call{value: _calls.value}(_calls.data);
     require(success, "failure on external contract call");
   }
 
