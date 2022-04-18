@@ -24,17 +24,6 @@ describe('Logic/RailgunLogic', () => {
     const TestERC20 = await ethers.getContractFactory('TestERC20');
     testERC20 = await TestERC20.deploy();
 
-    // Deploy Poseidon library
-    await overwriteArtifact(
-      'PoseidonT3',
-      poseidonGenContract.createCode(2),
-    );
-
-    await overwriteArtifact(
-      'PoseidonT6',
-      poseidonGenContract.createCode(5),
-    );
-
     const PoseidonT3 = await ethers.getContractFactory('PoseidonT3');
     const poseidonT3 = await PoseidonT3.deploy();
     const PoseidonT6 = await ethers.getContractFactory('PoseidonT6');

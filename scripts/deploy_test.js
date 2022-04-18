@@ -2,8 +2,9 @@
 /* eslint-disable jsdoc/require-jsdoc */
 /* global overwriteArtifact ethers */
 const poseidonGenContract = require('circomlib/src/poseidon_gencontract');
+const { ethers } = require('hardhat');
 const verificationKey = require('../verificationKey');
-
+  
 async function main() {
   // Get build artifacts
   const RailToken = await ethers.getContractFactory('RailTokenDAOMintable');
@@ -15,7 +16,9 @@ async function main() {
   const PoseidonT6 = await ethers.getContractFactory('PoseidonT6');
   const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
   const Proxy = await ethers.getContractFactory('PausableUpgradableProxy');
-
+  const Relay = await ethers.getContractFactory('RelayAdapt');
+  const Iweth = await ethers.getContractFactory('WETH9');
+  
   // Deploy RailToken
   const rail = await RailToken.deploy(
     (await ethers.getSigners())[0].address,
@@ -69,12 +72,19 @@ async function main() {
 
   // Deploy Railgun Logic
   const railgunLogic = await RailgunLogic.deploy();
+  
+  // Get WETH
+  const IWETH = await Iweth.deploy();
 
+  //Deploy Relay
+  const relay = await Relay.deploy(proxy.address, IWETH.address);
+  
   // Wait for contracts to be deployed
   await rail.deployTransaction.wait();
   await delegator.deployTransaction.wait();
   await railgunLogic.deployTransaction.wait();
   await proxy.deployTransaction.wait();
+  await relay.deployTransaction.wait();
 
   // Give deployer address full permissions
   await delegator.setPermission(
@@ -119,6 +129,8 @@ async function main() {
   console.log('Railgun Logic:', railgunLogic.address);
   console.log('Proxy Admin:', proxyAdmin.address);
   console.log('Proxy:', proxy.address);
+  console.log("Relayer",relay.address);
+  console.log("WETH", IWETH.address);
 
   console.log({
     rail: rail.address,
@@ -129,6 +141,8 @@ async function main() {
     implementation: railgunLogic.address,
     proxyAdmin: proxyAdmin.address,
     proxy: proxy.address,
+    Relayer: relay.address,
+    WETH: IWETH.address,
   });
 }
 
