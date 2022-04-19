@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from  "@openzeppelin/contracts/access/Ownable.sol";
-import { AccessControl }"@openzeppelin/contracts/access/AccessControl.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 /**
@@ -58,7 +58,7 @@ contract Treasury is Ownable, AccessControl {
    * @param _amount - Amount of tokens to transfer
    */
   function transferERC20(IERC20 _token, address _to, uint256 _amount) external {
-    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role");
     require(_to != address(0), "Treasury: Preventing potential accidental burn");
     _token.safeTransfer(_to, _amount);
   }
@@ -73,13 +73,13 @@ contract Treasury is Ownable, AccessControl {
    * @param _data - 
    */
   function transferERC1155(IERC1155 _token, address _from, address _to,uint256 _id, uint256 _amount, bytes memory _data) external {
-    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role");
     require(_to != address(0), "Treasury: Preventing potential accidental burn");
     _token.safeTransferFrom(_from, _to, _id, _amount, _data);
   }
 
   function callContract(Call[] calldata _calls) public noExternalContract returns (Result[] memory) {
-    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);        
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role");        
     // Call external contract and return
     // solhint-disable-next-line avoid-low-level-calls
 
@@ -97,12 +97,12 @@ contract Treasury is Ownable, AccessControl {
   }
 
   function addTransactionRole(address userAddress) public noExternalContract {
-    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);      
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role");      
     grantRole(TRANSACTIONS_ROLE, userAddress);
   }
 
   function removeTransactionRole(address userAddress) public noExternalContract {
-    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role);        
+    require(hasRole(GOVERNANCE_ROLE, msg.sender), "Caller is does not have Governance Role");        
     revokeRole(TRANSACTIONS_ROLE, userAddress);
   }
 
@@ -118,4 +118,17 @@ contract Treasury is Ownable, AccessControl {
    */
   // solhint-disable-next-line no-empty-blocks
   receive() external payable {}
+
+  /**
+   * @notice Blocks calls from external contracts
+   */
+  modifier noExternalContract () {
+    require(
+      msg.sender == tx.origin
+      || msg.sender == address(this)
+      , "Treasury: Caller is external contract"
+    );
+
+    _;
+  }
 }
