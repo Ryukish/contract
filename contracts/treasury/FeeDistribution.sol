@@ -19,12 +19,12 @@ contract FeeDistribution is Ownable {
 
 
     address[] public claimableTokens;
-    uint256 startingTimestamp;
-    uint256 lastProcessedInterval;
+    uint256 public startingTimestamp;
+    uint256 public lastProcessedInterval;
 
 
     // User Address -> Token address/BitMap
-    mapping(address => mapping(address => BitMaps.BitMap)) userTokenClaimTracker;
+    mapping(address => mapping(address => BitMaps.BitMap)) private userTokenClaimTracker;
 
     /**
    * @notice Sets initial admin
