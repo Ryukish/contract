@@ -17,6 +17,22 @@ contract FeeDistribution is Ownable {
     using BitMaps for BitMaps.BitMap;
     using SafeERC20 for IERC20;
 
+    uint256 public constant SNAPSHOT_INTERVAL = 14 days;
+
+    // Snapshots for globals
+    struct GlobalsSnapshot {
+      uint256 interval;
+      uint256 totalVotingPower;
+      uint256 totalStaked;
+    }
+
+    struct AccountSnapshot {
+      uint256 interval;
+      uint256 votingPower;
+    }
+  mapping(address => AccountSnapshot[]) private accountSnapshots;
+
+    GlobalsSnapshot[] private globalsSnapshots;
 
     address[] public claimableTokens;
     uint256 public startingTimestamp;
@@ -45,12 +61,31 @@ contract FeeDistribution is Ownable {
     }
 
     //TOADD - Rewards = Total earmarked * users voting power / total voting power
-    function calculateRewards() internal {
+    function calculateRewardsForInterval(address _token, uint256 _interval, address _userAddress) internal{
+      if(userTokenClaimTracker[_userAddress][_token][_interval] == 0){
+        uint256 accountSnapshot = accountSnapshots[_interval];
+        uint256 globalSnapshot = globalSnapshots[_interval];
+        uint256 earmarkedTotal = earmarked[_token][_interval];
 
+        userTokenClaimTracker[_userAddress][_token][_interval] = 1;
+
+        return earmarkedTotal.mul(accountSnapshot).div(globalSnapshot);
+      }
+      else {
+        return 0;
+      }
+    }
+
+    function calculateRewardsForToken(address _token, uint256 _startInterval, uint256 _endInterval, address _userAddress) internal{
+      uint256 total = 0;
+      for (uint256 i = _startInterval; i < _endInterval; i.add(1)){
+        total = total.add(calculateRewardsForInterval(_token, i, _userAddress));
+      }
+      return total;
     }
     
     //TOADD - Call calculateRewards
-    function payOut() external {
+    function payOut() internal {
 
     }
 
