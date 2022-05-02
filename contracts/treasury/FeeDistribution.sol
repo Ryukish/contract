@@ -60,7 +60,6 @@ contract FeeDistribution is Ownable {
 
     }
 
-    //TOADD - Rewards = Total earmarked * users voting power / total voting power
     function calculateRewardsForInterval(address _token, uint256 _interval, address _userAddress) internal{
       if(userTokenClaimTracker[_userAddress][_token][_interval] == 0){
         uint256 accountSnapshot = accountSnapshots[_interval];
@@ -84,14 +83,18 @@ contract FeeDistribution is Ownable {
       return total;
     }
     
-    //TOADD - Call calculateRewards
-    function payOut() internal {
+    function payoutRewardsForToken(address _token, uint256 _startInterval, uint256 _endInterval, address _userAddress) public noExternalContract {
+      IERC20 token = IERC20(_token);
+      uint256 amount = calculateRewardsForToken(_token, _startInterval, _endInterval, _userAddress);
 
+      //TOADD check amount is above min
+      token.transfer(_userAddress,amount);
     }
 
-    //TOADD - Multi-claim calls payout with an array of tokens to claim from
-    function multiClaimPayout() external {
-
+    function multiClaimPayout(address[] _tokens, uint256 _startInterval, uint256 _endInterval, address _userAddress) external {
+      for(uint256 i = 0; i<_tokens.length; i.add(1)){
+        payoutRewardsForToken(_tokens[i], _startInterval, _endInterval,_userAddress);
+      }
     }
 
    /**
