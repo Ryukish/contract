@@ -42,6 +42,7 @@ contract FeeDistribution is Ownable {
     uint256 public startingTimestamp;
     uint256 public lastProcessedInterval;
     uint256 public currentInterval;
+    mapping(address => mapping(uint256 => uint256)) public earmarked;
 
     uint256 claimBP = 420; //Get
     uint256 BASIS_POINTS = 10000; //Get
@@ -59,27 +60,15 @@ contract FeeDistribution is Ownable {
         stakingContract = _stakingContract;
     }
 
-    //TOADD - function adds token to claimable token array
-    function addToken(address _token) public noExternalContract {
-        
-    }
-
-    function removeToken(address _token) public noExternalContract {
-
-    }
-
-    function changeStakingAddress(address _contract) public noExternalContract {
-
-    }
-
-    //TOADD - function adds token to claimable token array
-    function calculateEarmarked() {
+    function calculateEarmarked(address _token) internal {
+      IERC20 token = IERC20(_token);
       if (lastProcessedInterval < currentInterval) {
         for (uint256 i = lastProcessedInterval; i < currentInterval; i.add(1)) {
-          uint256 earmarkAmount = treasuryBalanceDAI * claimBP / BASIS_POINTS;
+          uint256 earmarkAmount = token.balanceOf(account) * claimBP / BASIS_POINTS;
 
           treasuryBalanceDAI -= earmarkAmount;
-          //toadd     
+          //toadd
+
         }
       }
     }
@@ -89,7 +78,6 @@ contract FeeDistribution is Ownable {
         staking accessSnapshots = staking(stakingContract);
         AccountSnapshot accountSnapshot = accessSnapshots.accountSnapshot(_userAddress, _interval);
         GlobalsSnapshot globalSnapshot = accessSnapshots.globalsSnapshot(_interval);
-        //TOADD
         uint256 earmarkedTotal = earmarked[_token][_interval];
 
         userTokenClaimTracker[_userAddress][_token][_interval] = 1;
@@ -121,6 +109,19 @@ contract FeeDistribution is Ownable {
       for(uint256 i = 0; i<_tokens.length; i.add(1)){
         payoutRewardsForToken(_tokens[i], _startInterval, _endInterval,_userAddress);
       }
+    }
+
+    //TOADD - function adds token to claimable token array
+    function addToken(address _token) public noExternalContract {
+        
+    }
+
+    function removeToken(address _token) public noExternalContract {
+
+    }
+
+    function changeStakingAddress(address _contract) public noExternalContract {
+
     }
 
    /**
