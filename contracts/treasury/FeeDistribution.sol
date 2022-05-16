@@ -8,6 +8,11 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Ownable } from  "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
+interface staking {
+  function globalsSnapshot(uint256 _index) external view returns (GlobalsSnapshot memory);
+  function accountSnapshot(address _account, uint256 _index) external view returns (AccountSnapshot memory);
+}
+
 /**
  * @title FeeDistribution
  * @author Railgun Contributors
@@ -19,7 +24,6 @@ contract FeeDistribution is Ownable {
 
     uint256 public constant SNAPSHOT_INTERVAL = 14 days;
 
-    // Snapshots for globals
     struct GlobalsSnapshot {
       uint256 interval;
       uint256 totalVotingPower;
@@ -30,14 +34,11 @@ contract FeeDistribution is Ownable {
       uint256 interval;
       uint256 votingPower;
     }
-  mapping(address => AccountSnapshot[]) private accountSnapshots;
-
-    GlobalsSnapshot[] private globalsSnapshots;
 
     address[] public claimableTokens;
+    address public stakingContract;
     uint256 public startingTimestamp;
     uint256 public lastProcessedInterval;
-
 
     // User Address -> Token address/BitMap
     mapping(address => mapping(address => BitMaps.BitMap)) private userTokenClaimTracker;
@@ -45,10 +46,11 @@ contract FeeDistribution is Ownable {
     /**
    * @notice Sets initial admin
    */
-    constructor(address _admin, uint256 _startingTimestamp, uint256 _lastProcessedInterval) {
+    constructor(address _admin, uint256 _startingTimestamp, uint256 _lastProcessedInterval, address _stakingContract) {
         Ownable.transferOwnership(_admin);
         startingTimestamp = _startingTimestamp;
         lastProcessedInterval = _lastProcessedInterval;
+        stakingContract = _stakingContract;
     }
 
     //TOADD - function adds token to claimable token array
@@ -60,15 +62,34 @@ contract FeeDistribution is Ownable {
 
     }
 
+    function changeStakingAddress(address _contract) public noExternalContract {
+
+    }
+
+    //TOADD - function adds token to claimable token array
+    function calculateEarmarked() {
+      if (lastEarmarkedInterval < currentInterval) {
+        for (let i = lastEarmarkedInterval; i < currentInterval; i += 1) {
+          const earmarkAmount = treasuryBalanceDAI * claimBP / BASIS_POINTS;
+
+          // Transfer this amount to airdrop contract and store in earmark mapping
+          treasuryBalanceDAI -= earmarkAmount;
+          console.log(`earmark(${earmarkAmount} for interval ${i})`);
+        }
+      }
+    }
+
     function calculateRewardsForInterval(address _token, uint256 _interval, address _userAddress) internal{
       if(userTokenClaimTracker[_userAddress][_token][_interval] == 0){
-        uint256 accountSnapshot = accountSnapshots[_interval];
-        uint256 globalSnapshot = globalSnapshots[_interval];
+        staking accessSnapshots = staking(stakingContract);
+        AccountSnapshot accountSnapshot = accessSnapshots.accountSnapshot(_userAddress, _interval);
+        GlobalsSnapshot globalSnapshot = accessSnapshots.globalsSnapshot(_interval);
+        //TOADD
         uint256 earmarkedTotal = earmarked[_token][_interval];
 
         userTokenClaimTracker[_userAddress][_token][_interval] = 1;
 
-        return earmarkedTotal.mul(accountSnapshot).div(globalSnapshot);
+        return earmarkedTotal.mul(accountSnapshot.votingPower).div(globalSnapshot.totalVotingPower);
       }
       else {
         return 0;
