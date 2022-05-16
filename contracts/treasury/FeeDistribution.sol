@@ -37,8 +37,14 @@ contract FeeDistribution is Ownable {
 
     address[] public claimableTokens;
     address public stakingContract;
+
+    
     uint256 public startingTimestamp;
     uint256 public lastProcessedInterval;
+    uint256 public currentInterval;
+
+    uint256 claimBP = 420; //Get
+    uint256 BASIS_POINTS = 10000; //Get
 
     // User Address -> Token address/BitMap
     mapping(address => mapping(address => BitMaps.BitMap)) private userTokenClaimTracker;
@@ -68,13 +74,12 @@ contract FeeDistribution is Ownable {
 
     //TOADD - function adds token to claimable token array
     function calculateEarmarked() {
-      if (lastEarmarkedInterval < currentInterval) {
-        for (let i = lastEarmarkedInterval; i < currentInterval; i += 1) {
-          const earmarkAmount = treasuryBalanceDAI * claimBP / BASIS_POINTS;
+      if (lastProcessedInterval < currentInterval) {
+        for (uint256 i = lastProcessedInterval; i < currentInterval; i.add(1)) {
+          uint256 earmarkAmount = treasuryBalanceDAI * claimBP / BASIS_POINTS;
 
-          // Transfer this amount to airdrop contract and store in earmark mapping
           treasuryBalanceDAI -= earmarkAmount;
-          console.log(`earmark(${earmarkAmount} for interval ${i})`);
+          //toadd     
         }
       }
     }
