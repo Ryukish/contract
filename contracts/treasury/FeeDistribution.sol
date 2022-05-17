@@ -5,7 +5,8 @@ pragma abicoder v2;
 // OpenZeppelin v4
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Ownable } from  "@openzeppelin/contracts/access/Ownable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from  "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 interface staking {
@@ -18,7 +19,7 @@ interface staking {
  * @author Railgun Contributors
  * @notice Distrubtes Fee funds for Railgun
  */
-contract FeeDistribution is Ownable {
+contract FeeDistribution is Initializable, OwnableUpgradeable {
     using BitMaps for BitMaps.BitMap;
     using SafeERC20 for IERC20;
 
@@ -54,7 +55,7 @@ contract FeeDistribution is Ownable {
     /**
    * @notice Sets initial admin
    */
-    constructor(address _admin, uint256 _startingTimestamp, uint256 _lastProcessedInterval, address _stakingContract, address _treasuryContract) {
+    function initializeFeeDistribution (address _admin, uint256 _startingTimestamp, uint256 _lastProcessedInterval, address _stakingContract, address _treasuryContract) internal initializer  {
         Ownable.transferOwnership(_admin);
         startingTimestamp = _startingTimestamp;
         lastProcessedInterval = _lastProcessedInterval;
