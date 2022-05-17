@@ -37,6 +37,7 @@ contract FeeDistribution is Ownable {
 
     address[] public claimableTokens;
     address public stakingContract;
+    address public treasuryContract;
 
     
     uint256 public startingTimestamp;
@@ -53,18 +54,19 @@ contract FeeDistribution is Ownable {
     /**
    * @notice Sets initial admin
    */
-    constructor(address _admin, uint256 _startingTimestamp, uint256 _lastProcessedInterval, address _stakingContract) {
+    constructor(address _admin, uint256 _startingTimestamp, uint256 _lastProcessedInterval, address _stakingContract, address _treasuryContract) {
         Ownable.transferOwnership(_admin);
         startingTimestamp = _startingTimestamp;
         lastProcessedInterval = _lastProcessedInterval;
         stakingContract = _stakingContract;
+        treasuryContract = _treasuryContract;
     }
 
     function calculateEarmarked(address _token) internal {
       IERC20 token = IERC20(_token);
       if (lastProcessedInterval < currentInterval) {
         for (uint256 i = lastProcessedInterval; i < currentInterval; i.add(1)) {
-          uint256 earmarkAmount = token.balanceOf(account) * claimBP / BASIS_POINTS;
+          uint256 earmarkAmount = token.balanceOf(treasuryContract) * claimBP / BASIS_POINTS;
 
           treasuryBalanceDAI -= earmarkAmount;
           //toadd
