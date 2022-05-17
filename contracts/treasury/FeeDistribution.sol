@@ -35,7 +35,6 @@ contract FeeDistribution is Ownable {
       uint256 votingPower;
     }
 
-    address[] public claimableTokens;
     address public stakingContract;
     address public treasuryContract;
 
@@ -43,6 +42,7 @@ contract FeeDistribution is Ownable {
     uint256 public startingTimestamp;
     uint256 public lastProcessedInterval;
     uint256 public currentInterval;
+    mapping(address => address)public claimableTokens;
     mapping(address => mapping(uint256 => uint256)) public earmarked;
 
     uint256 claimBP = 420; //Get
@@ -67,10 +67,8 @@ contract FeeDistribution is Ownable {
       if (lastProcessedInterval < currentInterval) {
         for (uint256 i = lastProcessedInterval; i < currentInterval; i.add(1)) {
           uint256 earmarkAmount = token.balanceOf(treasuryContract) * claimBP / BASIS_POINTS;
-
-          treasuryBalanceDAI -= earmarkAmount;
-          //toadd
-
+          //Toadd - Transfer from treasury to this contract 
+          earmarked[token][i] = earmarkAmount;
         }
       }
     }
@@ -113,17 +111,21 @@ contract FeeDistribution is Ownable {
       }
     }
 
-    //TOADD - function adds token to claimable token array
+    // ADD OWNER ONLY
     function addToken(address _token) public noExternalContract {
-        
+      require(claimableTokens[_token] != _token);
+      claimableTokens[_token] = _token;
     }
 
+    // ADD OWNER ONLY 
     function removeToken(address _token) public noExternalContract {
-
+      require(claimableTokens[_token] == _token);
+      delete claimableTokens[_token];
     }
 
+    // ADD OWNER ONLY
     function changeStakingAddress(address _contract) public noExternalContract {
-
+      
     }
 
    /**
